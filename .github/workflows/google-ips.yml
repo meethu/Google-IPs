@@ -1,0 +1,39 @@
+# This workflow will install Python dependencies, run tests and lint with a single version of Python
+# For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
+
+name: Google IPs
+
+on:
+  schedule:
+    - cron: '0 1 1 * *'
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up Python 3.10
+      uses: actions/setup-python@v3
+      with:
+        python-version: "3.10"
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install requests netaddr
+    - name: Updating The IPs
+      run: |
+        python google_ips.py 
+    - name: Auto Commit Push
+      run: |
+        git config --local user.email github-actions[bot]@users.noreply.github.com
+        git config --local user.name github-actions[bot]
+        git add .
+        git commit -m "update google ips at $(date)" -a
+        git remote set-url origin https://${{ github.actor }}:${{ secrets.ACTION_TOKEN }}@github.com/${{ github.repository }}
+        git push
